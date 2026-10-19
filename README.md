@@ -35,6 +35,7 @@ projects, migration from Siemens S7, IIoT. Documentation is in Russian.*
 | Взять готовые ФБ устройств с единым обменом с HMI/SCADA вместо того, чтобы писать их под каждый объект | [plc-process-lib](https://github.com/kr0nsch/plc-process-lib) — `.compiled-library` в релизе |
 | Оценить и выполнить перевод программы с Siemens S7 (SCL) на CODESYS | [s7-to-codesys](https://github.com/kr0nsch/s7-to-codesys) |
 | Связать матрицу причин и следствий ПАЗ с кодом ПЛК, тестами и протоколом испытаний | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo) |
+| Получить код ПЛК, карту Modbus и теги SCADA из перечня сигналов, а не набирать их вручную | [iolistgen](https://github.com/kr0nsch/iolistgen) |
 
 В README каждого репозитория — быстрый старт без ПЛК, пошаговое руководство `docs/USAGE.md`, что проверено и
 какие есть ограничения.
@@ -48,6 +49,7 @@ projects, migration from Siemens S7, IIoT. Documentation is in Russian.*
 | [plc-ci-toolkit](https://github.com/kr0nsch/plc-ci-toolkit)<br><sub>CI/CD</sub> | Переиспользуемые workflow GitHub Actions и хук pre-commit: линтер ST, статанализ iec_checker и RuSTy на Linux; Static Analysis Light, сборка и тесты coUnit в CODESYS на своём Windows-раннере | Сборку и тесты проекта CODESYS запускают вручную в IDE, а pull request сливают без автоматических проверок. Здесь замечания приходят аннотациями в pull request примерно через минуту, сборка и тесты идут после слияния в `main` |
 | [s7-to-codesys](https://github.com/kr0nsch/s7-to-codesys)<br><sub>миграция</sub> | Конвертер SCL (Siemens S7, TIA Portal) → ST CODESYS V3.5: имена и структура один к одному, DB → GVL, OB → задачи, отчёт о ручной работе, тесты поведения из сценариев CSV | SCL не компилируется в CODESYS как есть, перенос сотен блоков вручную долог, а молча потерянная семантика (`F_TRIG`, `RETAIN`, OB100) всплывает на пусконаладке. Конвертер помечает всё неоднозначное и считает объём ручной работы до начала проекта |
 | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo)<br><sub>ПАЗ</sub> | Демонстрация логики ПАЗ на ST (не SIL-система): голосование MooN с деградацией при отказе канала, матрица причин и следствий. Генератор `cemgen` строит из матрицы конфигурацию ПЛК, тесты, лист матрицы и протокол испытаний | Матрица живёт в Excel, а код ПЛК, тесты и протокол FAT пишут по ней вручную — после каждой ревизии они расходятся. Здесь всё генерируется из одной матрицы, CI падает при любом расхождении |
+| [iolistgen](https://github.com/kr0nsch/iolistgen)<br><sub>генератор</sub> | Генератор слоя устройств CODESYS из перечня сигналов (CSV/XLSX): проверка перечня, GVL и вызовы ФБ plc-process-lib, карты Modbus, теги SCADA, список тревог | Перечень сигналов ведут в Excel, а код ПЛК, карту обмена и базу тегов SCADA набирают по нему вручную — с опечатками и расхождениями после каждой ревизии. Здесь всё генерируется из одного перечня, ошибки перечня видны до ПЛК |
 
 ## Как связаны проекты
 
@@ -56,7 +58,7 @@ flowchart TB
     tpl["plc-repo-template<br/>ST в git, сборка и тесты"]
     ci["plc-ci-toolkit<br/>CI: проверки, сборка, coUnit"]
     lib["plc-process-lib<br/>ФБ устройств"]
-    io["iolistgen<br/>перечень сигналов → код<br/>(готовится)"]
+    io["iolistgen<br/>перечень сигналов → код"]
 
     subgraph apps["Проекты на шаблоне"]
         s7["s7-to-codesys<br/>SCL Siemens S7 → ST"]
@@ -93,7 +95,6 @@ CI-тулкит — проверки и сборку в CODESYS для любо�
 | `kns-pump-station` | Флагман: канализационная насосная станция на три насоса с ПЧ (Modbus RTU) — алгоритм, модель объекта для испытаний без железа, HMI; на устройствах plc-process-lib | готовится |
 | `kns-port-domestic` | Перенос флагмана и библиотеки из CODESYS в отечественную среду Astra.IDE с подсчётом цены переноса | готовится |
 | `plc-iiot-stack` | IIoT-стенд: данные ПЛК по OPC UA и MQTT → InfluxDB → Grafana, команды оператора обратно с проверкой в ПЛК; работает и на эмуляторе без ПЛК | готовится |
-| `iolistgen` | Генератор: перечень сигналов (Excel, CSV) → проверка → код ПЛК для plc-process-lib, карты обмена Modbus, импорт тегов SCADA | готовится |
 
 ## Общее для всех проектов
 
@@ -119,6 +120,7 @@ CI-тулкит — проверки и сборку в CODESYS для любо�
 | [plc-ci-toolkit](https://github.com/kr0nsch/plc-ci-toolkit#тесты-и-качество) | шаги Windows-задания локально: Static Analysis Light, 18 из 18 тестов coUnit, JUnit; на self-hosted раннере GitHub ещё не запускалось |
 | [s7-to-codesys](https://github.com/kr0nsch/s7-to-codesys#тесты-и-качество) | демокорпус (20 файлов SCL) после конвертации — 0 ошибок и 0 предупреждений; 74 из 74 тестов coUnit |
 | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo#тесты-и-качество) | 255 из 255 тестов coUnit |
+| [iolistgen](https://github.com/kr0nsch/iolistgen#тесты-и-качество) | сгенерированный пример КНС-1 с plc-process-lib 1.0.0 — сборка 0 ошибок и 0 предупреждений; 4 из 4 тестов coUnit |
 
 ---
 

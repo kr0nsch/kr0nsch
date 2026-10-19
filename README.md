@@ -37,6 +37,7 @@ projects, migration from Siemens S7, IIoT. Documentation is in Russian.*
 | Связать матрицу причин и следствий ПАЗ с кодом ПЛК, тестами и протоколом испытаний | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo) |
 | Получить код ПЛК, карту Modbus и теги SCADA из перечня сигналов, а не набирать их вручную | [iolistgen](https://github.com/kr0nsch/iolistgen) |
 | Оценить и выполнить перенос проекта CODESYS на отечественную Astra.IDE (REGUL) | [kns-port-domestic](https://github.com/kr0nsch/kns-port-domestic) |
+| Вывести данные ПЛК в Grafana и принимать команды из внешней системы, не обходя защиты ПЛК | [plc-iiot-stack](https://github.com/kr0nsch/plc-iiot-stack) |
 
 В README каждого репозитория — быстрый старт без ПЛК, пошаговое руководство `docs/USAGE.md`, что проверено и
 какие есть ограничения.
@@ -52,6 +53,7 @@ projects, migration from Siemens S7, IIoT. Documentation is in Russian.*
 | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo)<br><sub>ПАЗ</sub> | Демонстрация логики ПАЗ на ST (не SIL-система): голосование MooN с деградацией при отказе канала, матрица причин и следствий. Генератор `cemgen` строит из матрицы конфигурацию ПЛК, тесты, лист матрицы и протокол испытаний | Матрица живёт в Excel, а код ПЛК, тесты и протокол FAT пишут по ней вручную — после каждой ревизии они расходятся. Здесь всё генерируется из одной матрицы, CI падает при любом расхождении |
 | [iolistgen](https://github.com/kr0nsch/iolistgen)<br><sub>генератор</sub> | Генератор слоя устройств CODESYS из перечня сигналов (CSV/XLSX): проверка перечня, GVL и вызовы ФБ plc-process-lib, карты Modbus, теги SCADA, список тревог | Перечень сигналов ведут в Excel, а код ПЛК, карту обмена и базу тегов SCADA набирают по нему вручную — с опечатками и расхождениями после каждой ревизии. Здесь всё генерируется из одного перечня, ошибки перечня видны до ПЛК |
 | [kns-port-domestic](https://github.com/kr0nsch/kns-port-domestic)<br><sub>перенос</sub> | Перенос флагмана КНС-1 и plc-process-lib из CODESYS 3.5.17.30 в отечественную Astra.IDE (REGUL): адаптированный код с пометками, чек-лист из 61 пункта, метрики цены переноса, журнал ошибок сборки | Переход на отечественный ПЛК начинают вслепую: непонятно, что из кода CODESYS не соберётся и сколько это стоит. Здесь перенос измерен на реальном проекте: что совместимо, что пришлось менять и что ещё проверить на железе |
+| [plc-iiot-stack](https://github.com/kr0nsch/plc-iiot-stack)<br><sub>IIoT</sub> | Стек данных насосной станции: OPC UA и MQTT → Telegraf → InfluxDB → Grafana, команды оператора обратно в ПЛК через белый список и проверку в ПЛК; эмулятор ПЛК для работы без железа | Данные ПЛК видны только в SCADA на объекте, а аналитика (наработка, пуски, тревоги по суткам) собирается вручную. Здесь открытый стек показывает их в Grafana, а команды из внешней системы не обходят защиты ПЛК |
 
 ## Как связаны проекты
 
@@ -69,7 +71,7 @@ flowchart TB
     end
 
     port["kns-port-domestic<br/>перенос на Astra.IDE"]
-    iiot["plc-iiot-stack<br/>OPC UA, MQTT → Grafana<br/>(готовится)"]
+    iiot["plc-iiot-stack<br/>OPC UA, MQTT → Grafana"]
 
     tpl -- "tools/" --> ci
     tpl -- "раскладка ST, tools/" --> lib
@@ -95,7 +97,6 @@ CI-тулкит — проверки и сборку в CODESYS для любо�
 | Проект | Что это | Статус |
 |---|---|---|
 | `kns-pump-station` | Флагман: канализационная насосная станция на три насоса с ПЧ (Modbus RTU) — алгоритм, модель объекта для испытаний без железа, HMI; на устройствах plc-process-lib | готовится |
-| `plc-iiot-stack` | IIoT-стенд: данные ПЛК по OPC UA и MQTT → InfluxDB → Grafana, команды оператора обратно с проверкой в ПЛК; работает и на эмуляторе без ПЛК | готовится |
 
 ## Общее для всех проектов
 
@@ -123,6 +124,7 @@ CI-тулкит — проверки и сборку в CODESYS для любо�
 | [sis-interlock-demo](https://github.com/kr0nsch/sis-interlock-demo#тесты-и-качество) | 255 из 255 тестов coUnit |
 | [iolistgen](https://github.com/kr0nsch/iolistgen#тесты-и-качество) | сгенерированный пример КНС-1 с plc-process-lib 1.0.0 — сборка 0 ошибок и 0 предупреждений; 4 из 4 тестов coUnit |
 | [kns-port-domestic](https://github.com/kr0nsch/kns-port-domestic#тесты-и-качество) | в Astra.IDE 1.7.2.2: библиотека и приложение — 0 ошибок и 0 предупреждений на REGUL R500 61 и R500 71-W (сборки для ПЛК и ВПЛК); на ПЛК не загружалось |
+| [plc-iiot-stack](https://github.com/kr0nsch/plc-iiot-stack#тесты-и-качество) | 85 из 85 тестов coUnit ядра; во флагмане со встроенной частью ПЛК — 423 из 423; живой обмен OPC UA: 133 из 133 узлов Good, команды станции принимаются ПЛК |
 
 ---
 
